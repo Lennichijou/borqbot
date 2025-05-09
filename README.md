@@ -3,6 +3,7 @@
 
 # Установка
 Для запуска требуется Python 3.11/3.12.
+
 Клонируйте репозиторий:
 ```
 git clone https://github.com/Lennichijou/borqbot.git
@@ -12,6 +13,7 @@ git clone https://github.com/Lennichijou/borqbot.git
 pip install -r requirements.txt
 ```
 В файле ```.env``` пропишите токен аутентификации, полученный в BotFather.
+
 Запустите в терминале:
 ```
 python app.py
