@@ -15,25 +15,26 @@ def get_quote():
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         last_quote_number = int(str(soup.find('a', attrs={"class": "quote__header_permalink"}).getText())[1:])
-
-    quote_check = False
-    while not quote_check:
-        num = random.randint(1, last_quote_number)
-        url = f"https://башорг.рф/quote/{num}"
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            quote = soup.find('div', 'quote__body')
-            quote_out = (str(quote).replace('<br/>', '\n')
-                          .replace('<br>', '\n')
-                          .replace(('<div class="quote__body">'), '')
-                          .replace('</div>','')
-                          .replace('&lt;', '<')
-                          .replace('&gt;', '>'))
-            quote_complete = re.sub('<div class="quote__strips" data-debug="1">\w+<\/div>', '', quote_out)
-            if not quote_complete.strip() == '':
-                quote_check = True
-    return str(quote_complete.strip())
+        quote_check = False
+        while not quote_check:
+            num = random.randint(1, last_quote_number)
+            url = f"https://башорг.рф/quote/{num}"
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                quote = soup.find('div', 'quote__body')
+                quote_out = (str(quote).replace('<br/>', '\n')
+                              .replace('<br>', '\n')
+                              .replace(('<div class="quote__body">'), '')
+                              .replace('</div>','')
+                              .replace('&lt;', '<')
+                              .replace('&gt;', '>'))
+                quote_complete = re.sub('<div class="quote__strips" data-debug="1">\w+<\/div>', '', quote_out)
+                if not quote_complete.strip() == '':
+                    quote_check = True
+        return str(quote_complete.strip())
+    else:
+        return "Сейчас Цитатник недоступен. Повторите попытку позже."
 
 @bot.message_handler(commands=["start"])
 def start(m, res=False):
