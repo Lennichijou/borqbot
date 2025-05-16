@@ -2,47 +2,66 @@ import telebot
 from bs4 import BeautifulSoup
 import requests, random, re, time
 from config import TELEGRAM_BOT_TOKEN
-
+from functions import *
+from io import BytesIO
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
-def get_quote():
-    url = 'https://башорг.рф'
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        last_quote_number = int(str(soup.find('a', attrs={"class": "quote__header_permalink"}).getText())[1:])
-        quote_check = False
-        while not quote_check:
-            num = random.randint(1, last_quote_number)
-            url = f"https://башорг.рф/quote/{num}"
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                quote = soup.find('div', 'quote__body')
-                quote_out = (str(quote).replace('<br/>', '\n')
-                              .replace('<br>', '\n')
-                              .replace(('<div class="quote__body">'), '')
-                              .replace('</div>','')
-                              .replace('&lt;', '<')
-                              .replace('&gt;', '>'))
-                quote_complete = re.sub('<div class="quote__strips" data-debug="1">\w+<\/div>', '', quote_out)
-                if not quote_complete.strip() == '':
-                    quote_check = True
-        return str(quote_complete.strip())
-    else:
-        return "Сейчас Цитатник недоступен. Повторите попытку позже."
 
-@bot.message_handler(commands=["start"])
-def start(m, res=False):
-        bot.send_message(m.chat.id, 'Чтобы получить случайную цитату с башорг.рф, введите команду /quote.')
+def get_argument(arg):
+    if len(arg) > 1:
+        return arg.split()[1]
+    else:
+        pass
+
+
+@bot.message_handler(commands=["start", "help"])
+def start(message, res=False):
+        bot.send_message(message.chat.id, '/quote + номер цитаты - получить цитату под этим номером.\n'
+                                    '/random_quote - получить случайную цитату.\n'
+                                    '/strip + YYYYMMDD - получить комикс, опубликованный в эту дату, если он есть.\n'
+                                          '/random_strip - получить случайный комикс')
+
+
+@bot.message_handler(commands=["strip"])
+def strip(message):
+    try:
+        number = get_argument(message.text)
+        strip_url, author = get_random_strip()
+        image_data = BytesIO(requests.get(strip_url).content)
+        bot.send_photo(message.chat.id, image_data, caption=author)
+    except IndexError:
+        bot.send_message(message.chat.id, 'Не хватает номера!')
+    except NoStripError:
+        bot.send_message(message.chat.id, NO_STRIP_MESSAGE)
+
 
 @bot.message_handler(commands=["quote"])
-def quote(m, res=False):
-    q = get_quote()
-    bot.send_message(m.chat.id, q)
+def quote(message):
+    try:
+        number = get_argument(message.text)
+        q = get_quote(number)
+        bot.send_message(message.chat.id, q)
+    except IndexError:
+        bot.send_message(message.chat.id, 'Не хватает номера! Вместе с командой /quote вводится номер цитаты.')
+    except NotAvailableError:
+        bot.send_message(message.chat.id, ERROR_MESSAGE)
+
+
+@bot.message_handler(commands=["random_quote"])
+def random_quote(message):
+    try:
+        q = get_random_quote()
+        bot.send_message(message.chat.id, q)
+    except NotAvailableError:
+        bot.send_message(message.chat.id, ERROR_MESSAGE)
+
+
+@bot.message_handler(commands=["random_strip"])
+def random_strip(message):
+    strip_url, author = get_random_strip()
+    image_data = BytesIO(requests.get(strip_url).content)
+    bot.send_photo(message.chat.id, image_data, caption=author)
+
 
 bot.polling()
