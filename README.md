@@ -12,7 +12,10 @@ git clone https://github.com/Lennichijou/borqbot.git
 ```
 pip install -r requirements.txt
 ```
-В файле ```.env``` пропишите токен аутентификации, полученный в BotFather.
+Создайте файл ```.env``` и в нём пропишите токен аутентификации, полученный в BotFather:
+```
+TELEGRAM_BOT_TOKEN=<YOUR_TOKEN>
+```
 
 Запустите в терминале:
 ```
