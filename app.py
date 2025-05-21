@@ -26,14 +26,16 @@ def start(message, res=False):
 @bot.message_handler(commands=["strip"])
 def strip(message):
     try:
-        number = get_argument(message.text)
-        strip_url, author = get_random_strip()
+        date = get_argument(message.text)
+        strip_url, author = get_strip_url(date)
         image_data = BytesIO(requests.get(strip_url).content)
         bot.send_photo(message.chat.id, image_data, caption=author)
     except IndexError:
         bot.send_message(message.chat.id, 'Не хватает номера!')
     except NoStripError:
         bot.send_message(message.chat.id, NO_STRIP_MESSAGE)
+    except NotAvailableError:
+        bot.send_message(message.chat.id, ERROR_MESSAGE)
 
 
 @bot.message_handler(commands=["quote"])

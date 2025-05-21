@@ -1,6 +1,12 @@
 from bs4 import BeautifulSoup
 import requests, random, re, time
 
+
+with open('src/strip_ids.txt', 'r') as file:
+    strip_ids = file.read().split()
+    file.close()
+
+
 ERROR_MESSAGE = "Сейчас Цитатник недоступен. Повторите попытку позже."
 NO_STRIP_MESSAGE = "Такого стрипа здесь нет."
 
@@ -74,35 +80,23 @@ def get_random_quote():
 
 
 def get_strip_url(date):
-    url = "https://башорг.рф/strip/" + date
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "html.parser")
-        strip = soup.find('img', 'quote__img')['data-src']
-        strip_url = f'https://башорг.рф{str(strip)}'
-        author = " ".join(soup.find('div', 'quote__author').get_text().split())
-        return strip_url, author
-    else:
-        raise NoStripError
-
-
-def get_random_strip():
-    years = [year for year in range(2007, 2022)]
-    months = [str(month) if month >= 10 else f'0{str(month)}' for month in range(1, 13)]
-    days = [day if day >= 10 else f'0{str(day)}' for day in range(1, 32)]
-    numbers = [f'{year}{month}{day}' for day in days for month in months for year in years]
-    strip_check = False
-    while not strip_check:
-        date = random.choice(numbers)
+    if date in strip_ids:
         url = "https://башорг.рф/strip/" + date
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
             strip = soup.find('img', 'quote__img')['data-src']
-            author = " ".join(soup.find('div', 'quote__author').get_text().split())
             strip_url = f'https://башорг.рф{str(strip)}'
-            strip_check = True
+            author = " ".join(soup.find('div', 'quote__author').get_text().split())
+            return strip_url, author
         else:
             raise NotAvailableError
+    else:
+        raise NoStripError
+
+
+def get_random_strip():
+    number = random.choice(strip_ids)
+    strip_url, author = get_strip_url(number)
     return strip_url, author
 
