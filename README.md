@@ -14,7 +14,7 @@ pip install -r requirements.txt
 ```
 Создайте файл ```.env``` и в нём пропишите токен аутентификации, полученный в BotFather:
 ```
-TELEGRAM_BOT_TOKEN=INSERT_YOUR_TOKEN_HERE
+TELEGRAM_BOT_TOKEN=<YOUR_TOKEN>
 ```
 
 Запустите в терминале:
