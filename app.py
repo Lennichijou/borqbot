@@ -59,9 +59,12 @@ def random_quote(message):
 
 @bot.message_handler(commands=["random_strip"])
 def random_strip(message):
-    strip_url, author = get_random_strip()
-    image_data = BytesIO(requests.get(strip_url).content)
-    bot.send_photo(message.chat.id, image_data, caption=author)
+    try:
+        strip_url, author = get_random_strip()
+        image_data = BytesIO(requests.get(strip_url).content)
+        bot.send_photo(message.chat.id, image_data, caption=author)
+    except NotAvailableError:
+        bot.send_message(message.chat.id, ERROR_MESSAGE)
 
 
 bot.polling()

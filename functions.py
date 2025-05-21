@@ -102,5 +102,7 @@ def get_random_strip():
             author = " ".join(soup.find('div', 'quote__author').get_text().split())
             strip_url = f'https://башорг.рф{str(strip)}'
             strip_check = True
+        else:
+            raise NotAvailableError
     return strip_url, author
 
