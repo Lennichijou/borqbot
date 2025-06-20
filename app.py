@@ -20,7 +20,8 @@ def start(message, res=False):
         bot.send_message(message.chat.id, '/quote + номер цитаты - получить цитату под этим номером.\n'
                                     '/random_quote - получить случайную цитату.\n'
                                     '/strip + YYYYMMDD - получить комикс, опубликованный в эту дату, если он есть.\n'
-                                          '/random_strip - получить случайный комикс')
+                                          '/random_strip - получить случайный комикс.\n'
+                                          '/abyss - случайная цитата из "Бездны".')
 
 
 @bot.message_handler(commands=["strip"])
@@ -69,4 +70,13 @@ def random_strip(message):
         bot.send_message(message.chat.id, ERROR_MESSAGE)
 
 
-bot.polling()
+@bot.message_handler(commands=['abyss'])
+def abyss_q(message):
+    try:
+        q = get_abyss_quote()
+        bot.send_message(message.chat.id, q)
+    except NotAvailableError:
+        bot.send_message(message.chat.id, ERROR_MESSAGE)
+
+
+bot.infinity_polling()

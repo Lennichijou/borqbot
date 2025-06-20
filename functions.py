@@ -25,7 +25,7 @@ headers = {
 
 
 def get_quote(number):
-    url = f"https://башорг.рф/quote/{number}"
+    url = f"https://xn--80abh7bk0c.xn--p1ai/quote/{number}"
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -41,7 +41,7 @@ def get_quote(number):
             tag.decompose()
         quote_complete = soup.get_text()
         if not quote_complete.strip() == '':
-            return str(quote_complete.strip())
+            return f'{str(quote_complete.strip())}\n\n#{number}'
         else:
             return "Такой цитаты здесь нет. Попробуйте другой номер."
     else:
@@ -49,7 +49,7 @@ def get_quote(number):
 
 
 def get_random_quote():
-    url = 'https://башорг.рф'
+    url = 'https://xn--80abh7bk0c.xn--p1ai/'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -57,7 +57,7 @@ def get_random_quote():
         quote_check = False
         while not quote_check:
             num = random.randint(1, last_quote_number)
-            url = f"https://башорг.рф/quote/{num}"
+            url = f"https://xn--80abh7bk0c.xn--p1ai/quote/{num}"
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -78,15 +78,32 @@ def get_random_quote():
     else:
         raise NotAvailableError
 
+def get_abyss_quote():
+    url = "https://xn--80abh7bk0c.xn--p1ai/abyss"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        abyss_quote = soup.find('div', 'quote__body')
+        quote_out = (str(abyss_quote).replace('<br/>', '\n')
+                     .replace('<br>', '\n')
+                     .replace(('<div class="quote__body">'), '')
+                     .replace('</div>', '')
+                     .replace('&lt;', '<')
+                     .replace('&gt;', '>'))
+        return f'{str(quote_out)}'
+    else:
+        raise NotAvailableError
+
+
 
 def get_strip_url(date):
     if date in strip_ids:
-        url = "https://башорг.рф/strip/" + date
+        url = "https://xn--80abh7bk0c.xn--p1ai/strip/" + date
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
             strip = soup.find('img', 'quote__img')['data-src']
-            strip_url = f'https://башорг.рф{str(strip)}'
+            strip_url = f'https://xn--80abh7bk0c.xn--p1ai{str(strip)}'
             author = " ".join(soup.find('div', 'quote__author').get_text().split())
             return strip_url, author
         else:
