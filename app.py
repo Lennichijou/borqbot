@@ -1,12 +1,14 @@
 import telebot
+import logging
 from bs4 import BeautifulSoup
 import requests, random, re, time
+#from aiogram import Bot, Dispatcher, executor, types
 from config import TELEGRAM_BOT_TOKEN
 from functions import *
 from io import BytesIO
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-
+logging.basicConfig(level=logging.DEBUG)
 
 def get_argument(arg):
     if len(arg) > 1:

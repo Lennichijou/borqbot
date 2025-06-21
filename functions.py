@@ -1,45 +1,34 @@
 from bs4 import BeautifulSoup
 import requests, random, re, time
 
-
 with open('src/strip_ids.txt', 'r') as file:
     strip_ids = file.read().split()
     file.close()
 
-
 ERROR_MESSAGE = "Сейчас Цитатник недоступен. Повторите попытку позже."
 NO_STRIP_MESSAGE = "Такого стрипа здесь нет."
-
 
 class NoStripError(Exception):
     pass
 
-
 class NotAvailableError(Exception):
     pass
-
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 }
-
 
 def get_quote(number):
     url = f"https://xn--80abh7bk0c.xn--p1ai/quote/{number}"
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
-        quote = soup.find('div', 'quote__body')
-        quote_out = (str(quote).replace('<br/>', '\n')
-                     .replace('<br>', '\n')
-                     .replace(('<div class="quote__body">'), '')
-                     .replace('</div>', '')
-                     .replace('&lt;', '<')
-                     .replace('&gt;', '>'))
-        soup = BeautifulSoup(quote_out, 'html.parser')
-        for tag in soup.find_all('div', class_='quote__strips'):
+        quote = soup.find('div', class_='quote__body')
+        for tag in quote.find_all('div'):
             tag.decompose()
-        quote_complete = soup.get_text()
+        for tag in quote.find_all('br'):
+            tag.replace_with("\n")
+        quote_complete = quote.get_text()
         if not quote_complete.strip() == '':
             return f'{str(quote_complete.strip())}\n\n#{number}'
         else:
@@ -61,17 +50,12 @@ def get_random_quote():
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                quote = soup.find('div', 'quote__body')
-                quote_out = (str(quote).replace('<br/>', '\n')
-                             .replace('<br>', '\n')
-                             .replace(('<div class="quote__body">'), '')
-                             .replace('</div>', '')
-                             .replace('&lt;', '<')
-                             .replace('&gt;', '>'))
-                soup = BeautifulSoup(quote_out, 'html.parser')
-                for tag in soup.find_all('div', class_='quote__strips'):
+                quote = soup.find('div', class_='quote__body')
+                for tag in quote.find_all('div'):
                     tag.decompose()
-                quote_complete = soup.get_text()
+                for tag in quote.find_all('br'):
+                    tag.replace_with("\n")
+                quote_complete = quote.get_text()
                 if not quote_complete.strip() == '':
                     quote_check = True
         return f'{str(quote_complete.strip())}\n\n#{num}'
@@ -83,14 +67,13 @@ def get_abyss_quote():
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
-        abyss_quote = soup.find('div', 'quote__body')
-        quote_out = (str(abyss_quote).replace('<br/>', '\n')
-                     .replace('<br>', '\n')
-                     .replace(('<div class="quote__body">'), '')
-                     .replace('</div>', '')
-                     .replace('&lt;', '<')
-                     .replace('&gt;', '>'))
-        return f'{str(quote_out)}'
+        quote = soup.find('div', class_='quote__body')
+        for tag in quote.find_all('div'):
+            tag.decompose()
+        for tag in quote.find_all('br'):
+            tag.replace_with("\n")
+        quote_complete = quote.get_text()
+        return f'{str(quote_complete.strip())}'
     else:
         raise NotAvailableError
 
