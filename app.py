@@ -31,14 +31,13 @@ def strip(message):
     try:
         date = get_argument(message.text)
         strip_url, author = get_strip_url(date)
-        image_data = BytesIO(requests.get(strip_url).content)
-        bot.send_photo(message.chat.id, image_data, caption=author)
+        if strip_url == ERROR_MESSAGE or strip_url == NO_STRIP_MESSAGE:
+            bot.send_message(message.chat.id, strip_url)
+        else:
+            image_data = BytesIO(requests.get(strip_url).content)
+            bot.send_photo(message.chat.id, image_data, caption=author)
     except IndexError:
-        bot.send_message(message.chat.id, 'Не хватает номера!')
-    except NoStripError:
-        bot.send_message(message.chat.id, NO_STRIP_MESSAGE)
-    except NotAvailableError:
-        bot.send_message(message.chat.id, ERROR_MESSAGE)
+        bot.send_message(message.chat.id, NO_NUM_MESSAGE)
 
 
 @bot.message_handler(commands=["quote"])
@@ -48,37 +47,29 @@ def quote(message):
         q = get_quote(number)
         bot.send_message(message.chat.id, q)
     except IndexError:
-        bot.send_message(message.chat.id, 'Не хватает номера! Вместе с командой /quote вводится номер цитаты.')
-    except NotAvailableError:
-        bot.send_message(message.chat.id, ERROR_MESSAGE)
+        bot.send_message(message.chat.id, 'Не хватает номера! Введите команду с номером нужной цитаты.')
 
 
 @bot.message_handler(commands=["random_quote"])
 def random_quote(message):
-    try:
-        q = get_random_quote()
-        bot.send_message(message.chat.id, q)
-    except NotAvailableError:
-        bot.send_message(message.chat.id, ERROR_MESSAGE)
+    q = get_random_quote()
+    bot.send_message(message.chat.id, q)
 
 
 @bot.message_handler(commands=["random_strip"])
 def random_strip(message):
-    try:
-        strip_url, author = get_random_strip()
+    strip_url, author = get_random_strip()
+    if strip_url == ERROR_MESSAGE or strip_url == NO_STRIP_MESSAGE:
+        bot.send_message(message.chat.id, strip_url)
+    else:
         image_data = BytesIO(requests.get(strip_url).content)
         bot.send_photo(message.chat.id, image_data, caption=author)
-    except NotAvailableError:
-        bot.send_message(message.chat.id, ERROR_MESSAGE)
 
 
 @bot.message_handler(commands=['abyss'])
 def abyss_q(message):
-    try:
-        q = get_abyss_quote()
-        bot.send_message(message.chat.id, q)
-    except NotAvailableError:
-        bot.send_message(message.chat.id, ERROR_MESSAGE)
+    q = get_abyss_quote()
+    bot.send_message(message.chat.id, q)
 
 
 bot.infinity_polling()

@@ -1,22 +1,22 @@
 from bs4 import BeautifulSoup
 import requests, random, re, time
 
+
 with open('src/strip_ids.txt', 'r') as file:
     strip_ids = file.read().split()
     file.close()
 
+
 ERROR_MESSAGE = "Сейчас Цитатник недоступен. Повторите попытку позже."
 NO_STRIP_MESSAGE = "Такого стрипа здесь нет."
+NO_QUOTE_MESSAGE = "Такой цитаты здесь нет. Попробуйте другой номер."
+NO_NUM_MESSAGE = 'Не хватает номера!'
 
-class NoStripError(Exception):
-    pass
-
-class NotAvailableError(Exception):
-    pass
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 }
+
 
 def get_quote(number):
     url = f"https://xn--80abh7bk0c.xn--p1ai/quote/{number}"
@@ -32,9 +32,9 @@ def get_quote(number):
         if not quote_complete.strip() == '':
             return f'{str(quote_complete.strip())}\n\n#{number}'
         else:
-            return "Такой цитаты здесь нет. Попробуйте другой номер."
+            return NO_QUOTE_MESSAGE
     else:
-        raise NotAvailableError
+        return ERROR_MESSAGE
 
 
 def get_random_quote():
@@ -43,24 +43,14 @@ def get_random_quote():
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         last_quote_number = int(str(soup.find('a', attrs={"class": "quote__header_permalink"}).getText())[1:])
-        quote_check = False
-        while not quote_check:
+        while True:
             num = random.randint(1, last_quote_number)
-            url = f"https://xn--80abh7bk0c.xn--p1ai/quote/{num}"
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                quote = soup.find('div', class_='quote__body')
-                for tag in quote.find_all('div'):
-                    tag.decompose()
-                for tag in quote.find_all('br'):
-                    tag.replace_with("\n")
-                quote_complete = quote.get_text()
-                if not quote_complete.strip() == '':
-                    quote_check = True
-        return f'{str(quote_complete.strip())}\n\n#{num}'
+            quote = get_quote(num)
+            if quote != NO_QUOTE_MESSAGE:
+                return quote
     else:
-        raise NotAvailableError
+        return ERROR_MESSAGE
+
 
 def get_abyss_quote():
     url = "https://xn--80abh7bk0c.xn--p1ai/abyss"
@@ -75,8 +65,7 @@ def get_abyss_quote():
         quote_complete = quote.get_text()
         return f'{str(quote_complete.strip())}'
     else:
-        raise NotAvailableError
-
+        return ERROR_MESSAGE
 
 
 def get_strip_url(date):
@@ -90,9 +79,9 @@ def get_strip_url(date):
             author = " ".join(soup.find('div', 'quote__author').get_text().split())
             return strip_url, author
         else:
-            raise NotAvailableError
+            return ERROR_MESSAGE, None
     else:
-        raise NoStripError
+        return NO_STRIP_MESSAGE, None
 
 
 def get_random_strip():
