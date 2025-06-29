@@ -19,6 +19,7 @@
 Клонируйте репозиторий:
 ```
 git clone https://github.com/Lennichijou/borqbot.git
+cd borqbot
 ```
 Установите библиотеки из файла ```requirements.txt```:
 ```
@@ -31,5 +32,5 @@ TELEGRAM_BOT_TOKEN=<YOUR_TOKEN>
 
 Запустите в терминале:
 ```
-python app.py
+python main.py
 ```
