@@ -22,6 +22,12 @@ class NoContentError(Exception):
         self.message = message
         super().__init__(self.message)
 
+def get_argument(message):
+    if len(message.split()) > 1:
+        return message.split()[1]
+    else:
+        raise NoNumberError
+
 async def get_quote(quote_id):
     url =  f"{BASE_URL}/quote/{quote_id}"
     async with aiohttp.ClientSession() as session:

@@ -3,20 +3,13 @@ from aiogram.filters import Command
 from aiogram.types import Message, URLInputFile
 import asyncio
 import logging
-from parser import get_quote, get_abyss_quote, get_strip_info, get_random_quote, get_random_strip, NoNumberError
+from parser import get_quote, get_abyss_quote, get_strip_info, get_random_quote, get_random_strip, get_argument
 from config import TELEGRAM_BOT_TOKEN
 
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
-logging.basicConfig(level=logging.DEBUG)
-
-
-def get_argument(message):
-    if len(message.split()) > 1:
-        return message.split()[1]
-    else:
-        raise NoNumberError
+logging.basicConfig(level=logging.INFO)
 
 
 @dp.message(Command("start", "help"))
