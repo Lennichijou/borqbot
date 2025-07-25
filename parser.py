@@ -1,6 +1,8 @@
 import random
 import aiohttp
 from bs4 import BeautifulSoup
+from database import db_get_quote, db_add_quote, db_get_strip, db_add_strip
+import logging
 
 ERROR_MESSAGE = "Сейчас Цитатник недоступен. Повторите попытку позже."
 NO_CONTENT_MESSAGE = "Такой цитаты/стрипа здесь нет."
@@ -29,23 +31,30 @@ def get_argument(message):
         raise NoNumberError
 
 async def get_quote(quote_id):
-    url =  f"{BASE_URL}/quote/{quote_id}"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status != 200:
-                raise NoConnectionError
-            html = await response.text()
-            soup = BeautifulSoup(html, 'html.parser')
-            quote = soup.find('div', class_='quote__body')
-            for tag in quote.find_all('div'):
-                tag.decompose()
-            for tag in quote.find_all('br'):
-                tag.replace_with("\n")
-            quote_complete = quote.get_text()
-            if not quote_complete.strip() == '':
-                return f'{str(quote_complete.strip())}\n\n#{quote_id}'
-            else:
-                raise NoContentError
+    answer = await db_get_quote(quote_id)
+    if answer:
+        logging.getLogger(__name__).info(f"Called a quote from database: {quote_id}")
+        return answer
+    else:
+        url =  f"{BASE_URL}/quote/{quote_id}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    raise NoConnectionError
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                quote = soup.find('div', class_='quote__body')
+                for tag in quote.find_all('div'):
+                    tag.decompose()
+                for tag in quote.find_all('br'):
+                    tag.replace_with("\n")
+                quote_complete = quote.get_text()
+                if not quote_complete.strip() == '':
+                    result = f'{str(quote_complete.strip())}\n\n#{quote_id}'
+                    await db_add_quote(quote_id, result)
+                    return result
+                else:
+                    raise NoContentError
 
 async def get_abyss_quote():
     url = f"{BASE_URL}/abyss"
@@ -69,6 +78,11 @@ async def get_strip_info(number):
         file.close()
     if number not in strip_ids:
         raise NoContentError
+    answer = await db_get_strip(number)
+    if answer:
+        logging.getLogger(__name__).info(f"Called a strip from database: {number}")
+        strip_url, author = answer
+        return strip_url, author
     else:
         url = f"{BASE_URL}/strip/{number}"
         async with aiohttp.ClientSession() as session:
@@ -78,8 +92,9 @@ async def get_strip_info(number):
                 html = await response.text()
                 soup = BeautifulSoup(html, 'html.parser')
                 strip = soup.find('img', class_='quote__img')['data-src']
-                strip_url = f'https://xn--80abh7bk0c.xn--p1ai{str(strip)}'
+                strip_url = f'{BASE_URL}{str(strip)}'
                 author = " ".join(soup.find('div', class_='quote__author').get_text().split())
+                await db_add_strip(number, strip_url, author)
                 return strip_url, author
 
 async def get_random_quote():

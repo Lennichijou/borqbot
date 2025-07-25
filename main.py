@@ -5,11 +5,16 @@ import asyncio
 import logging
 from parser import get_quote, get_abyss_quote, get_strip_info, get_random_quote, get_random_strip, get_argument
 from config import TELEGRAM_BOT_TOKEN
-
+from database import init_db
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='main.log', level=logging.INFO)
+
+
+@dp.startup()
+async def on_startup():
+    await init_db()
 
 
 @dp.message(Command("start", "help"))
