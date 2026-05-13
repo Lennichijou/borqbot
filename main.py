@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 import logging
 from config import TELEGRAM_BOT_TOKEN
 
-logging.basicConfig(filename='main.log', level=logging.INFO)
+logging.basicConfig(filename='main.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 bot: Bot
 conn: aiosqlite.Connection
@@ -24,6 +24,7 @@ BASE_URL = "https://xn--80abh7bk0c.xn--p1ai"
 STRIPS_ID_LIST = "strip_ids.txt"
 DB_PATH = "quotes.db"
 logger = logging.getLogger(__name__)
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 class NoConnectionError(Exception):
     def __init__(self, message=ERROR_MESSAGE):
@@ -40,11 +41,13 @@ class NoContentError(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 def get_argument(message):
     if len(message.split()) > 1:
         return message.split()[1]
     else:
         raise NoNumberError
+
 
 async def init_db():
     await conn.execute("PRAGMA journal_mode = WAL")
@@ -104,6 +107,7 @@ async def db_add_strip(strip_id, link, desc):
     except sqlite3.IntegrityError:
         pass
 
+
 async def db_get_strip(strip_id):
     cursor = await conn.execute("""
         SELECT link, description FROM strips
@@ -116,6 +120,7 @@ async def db_get_strip(strip_id):
     logger.info(f"Called a strip: {strip_id}.")
     return link, desc
 
+
 async def get_quote(quote_id):
     answer = await db_get_quote(quote_id)
     if answer:
@@ -126,7 +131,6 @@ async def get_quote(quote_id):
         if response.status != 200:
             raise NoConnectionError
         html = await response.text()
-        response.close()
     soup = BeautifulSoup(html, 'html.parser')
     quote = soup.find('div', class_='quote__body')
     for tag in quote.find_all('div'):
@@ -141,13 +145,13 @@ async def get_quote(quote_id):
     else:
         raise NoContentError
 
+
 async def get_abyss_quote():
     url = f"{BASE_URL}/abyss"
     async with session.get(url) as response:
         if response.status != 200:
             raise NoConnectionError
         html = await response.text()
-        response.close()
     soup = BeautifulSoup(html, 'html.parser')
     quote = soup.find('div', class_='quote__body')
     for tag in quote.find_all('div'):
@@ -156,6 +160,7 @@ async def get_abyss_quote():
         tag.replace_with("\n")
     quote_complete = quote.get_text()
     return str(quote_complete.strip())
+
 
 async def get_strip_info(number):
     with open(STRIPS_ID_LIST, 'r') as file:
@@ -173,7 +178,6 @@ async def get_strip_info(number):
         if response.status != 200:
             raise NoConnectionError
         html = await response.text()
-        response.close()
     soup = BeautifulSoup(html, 'html.parser')
     s = soup.find('img', class_='quote__img')['data-src']
     strip_url = f'{BASE_URL}{str(s)}'
@@ -181,13 +185,13 @@ async def get_strip_info(number):
     await db_add_strip(number, strip_url, author)
     return strip_url, author
 
+
 async def get_random_quote():
     url = BASE_URL
     async with session.get(url) as response:
         if response.status != 200:
             raise NoConnectionError
         html = await response.text()
-        response.close()
     soup = BeautifulSoup(html, 'html.parser')
     last_quote_number = int(str(soup.find('a', class_="quote__header_permalink").get_text())[1:])
     while True:
@@ -197,6 +201,7 @@ async def get_random_quote():
             continue
         else:
             return q
+
 
 async def get_random_strip():
     with open(STRIPS_ID_LIST, 'r') as file:
@@ -212,8 +217,9 @@ async def main():
 
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     dp = Dispatcher()
+    connector = aiohttp.TCPConnector(limit=10)
     timeout = aiohttp.ClientTimeout(total=30, connect=10)
-    session = aiohttp.ClientSession(timeout=timeout)
+    session = aiohttp.ClientSession(timeout=timeout, connector=connector, headers=headers)
     conn = await aiosqlite.connect(DB_PATH)
 
     @dp.startup()
@@ -272,7 +278,10 @@ async def main():
         except Exception as e:
             await message.answer(f"Ошибка: {e}")
 
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await session.close()
 
 
 if __name__ == "__main__":
